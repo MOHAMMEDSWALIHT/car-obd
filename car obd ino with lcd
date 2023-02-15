@@ -1,0 +1,104 @@
+#include <mcp_can.h>
+#include <SPI.h>
+#include <LiquidCrystal.h>
+
+const int rs = 4, en = 3, d4 = 8, d5 = 7, d6 = 6, d7 = 5;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+unsigned long previousMillis = 0;
+unsigned long previousMillis1 = 60;
+const long interval = 100; 
+
+long unsigned int rxId;
+unsigned char len = 0;
+unsigned char rxBuf[8];
+long unsigned int rpm;
+long unsigned int carspeed;
+char msgString[128];                        // Array to store `2 string
+
+#define CAN0_INT 2                              // Set INT to pin 2
+MCP_CAN CAN0(10);     // Set CS to pin 10
+
+byte data[8] = {0x02, 0x01, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00}; 
+byte data1[8]= {0x02, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+byte data2[8]= {0x02, 0x01, 0x0D, 0x00, 0x00, 0x00, 0x00, 0x00};
+void setup()
+{
+    // set up the LCD's number of columns and rows:
+  lcd.begin(16, 2);
+  // Print a message to the LCD.
+  lcd.print("Initializing..");
+  lcd.display();
+
+  // Initialize MCP2515 running at 16MHz with a baudrate of 500kb/s and the masks and filters disabled.
+  if(CAN0.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) lcd.print("MCP2515 Initialized Successfully!");
+  else lcd.print("Error Initializing MCP2515...");
+
+  CAN0.setMode(MCP_NORMAL);   // Change to normal mode to allow messages to be transmitted
+    pinMode(CAN0_INT, INPUT);                            // Configuring pin for /INT input
+    lcd.display();
+  delay(500);
+  lcd.clear();
+}
+
+void printout() {
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("RPM: ");
+          lcd.setCursor(0, 1);
+          lcd.print("Speed: ");
+          lcd.setCursor(5,0);
+          lcd.print(rpm);
+          lcd.display();
+          lcd.setCursor(6, 1);
+          lcd.print(carspeed);
+          lcd.display();
+          lcd.display();
+}
+
+
+void loop()
+{
+unsigned long currentMillis = millis();
+unsigned long currentMillis1 = millis();
+
+if (currentMillis - previousMillis >= interval) {
+    // save the last time you blinked the LED
+    previousMillis = currentMillis;
+    byte sndStat = CAN0.sendMsgBuf(0x7DF, 0, 8, data);
+  } 
+if (currentMillis1 - previousMillis1 >= interval) {
+    // save the last time you blinked the LED
+    previousMillis1 = currentMillis1;
+    byte sndStat1 = CAN0.sendMsgBuf(0x7DF, 0, 8, data2);
+  } 
+  
+
+  // Receive
+    if(!digitalRead(CAN0_INT))                         // If CAN0_INT pin is low, read receive buffer
+  {
+    CAN0.readMsgBuf(&rxId, &len, rxBuf);      // Read data: len = data length, buf = data byte(s)
+    if(rxId == 0x7E8)  {
+      if(rxBuf[1]!= 0x7f){
+        switch (rxBuf[2]){
+          case 0x0C:
+            
+            rpm = ((rxBuf[3] * 256)+ rxBuf[4])/4;
+            printout();
+          break;
+           case 0x0D:
+            carspeed = rxBuf[3];
+            //Serial.println ( carspeed);
+            printout();
+          break;
+        }
+
+      }
+      else{
+        byte sndStat = CAN0.sendMsgBuf(0x7DF, 0, 8, data1);
+      }
+    }
+  }
+    
+}
+
+
