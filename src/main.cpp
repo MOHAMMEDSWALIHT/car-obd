@@ -23,6 +23,14 @@ void setup()
   mcp2.pinMode(6, OUTPUT);
   mcp2.pinMode(7, OUTPUT);
 
+  mcp1.digitalWrite(2,HIGH);
+  mcp1.digitalWrite(5,HIGH);
+  mcp1.digitalWrite(8,HIGH);
+  mcp1.digitalWrite(11,HIGH);
+  mcp1.digitalWrite(14,HIGH);
+  mcp1.digitalWrite(7,HIGH);
+
+
   mcp1.digitalWrite(0,LOW);
   mcp1.digitalWrite(3,LOW);
   mcp1.digitalWrite(6,LOW);
@@ -32,7 +40,7 @@ void setup()
 
   mcp1.digitalWrite(1,HIGH);
   mcp1.digitalWrite(4,HIGH);
-  mcp1.digitalWrite(7,HIGH);
+  mcp2.digitalWrite(7,HIGH);
   mcp1.digitalWrite(10,HIGH);
   mcp1.digitalWrite(13,HIGH);
   mcp2.digitalWrite(6,HIGH);
@@ -56,7 +64,6 @@ void loop()
   else if (mcp2.digitalRead(1) == HIGH)
   {
     mcp1.digitalWrite(3, HIGH);
-    mcp1.digitalWrite(4, LOW);
     mcp1.digitalWrite(5, HIGH);
     delay(1000);
     mcp1.digitalWrite(5, LOW);
